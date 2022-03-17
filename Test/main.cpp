@@ -1,5 +1,5 @@
 #include <windows.h>
-#include "../PsdThumbnailProvider/GetThumbnail.cpp"
+#include "../NarThumbnailProvider/GetThumbnail.cpp"
 
 static HBITMAP bitmap = NULL;
 
@@ -10,7 +10,7 @@ LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_CREATE: {
 		IStream* stream;
 		SHCreateStreamOnFileEx(L"test4.psd", STGM_READ, FILE_ATTRIBUTE_NORMAL, false, NULL, &stream);
-		bitmap = GetPSDThumbnail(stream);
+		bitmap = GetNARThumbnail(stream);
 		BITMAP bm = {};
 		GetObject(bitmap, sizeof(bm), &bm);
 		RECT rc, rcClient;
@@ -73,7 +73,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	HWND mainWindow = CreateWindowEx(
 		0,  // WS_EX_ACCEPTFILES
 		windowClass.lpszClassName,
-		TEXT("PSD Preview Test"),
+		TEXT("NAR Preview Test"),
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,

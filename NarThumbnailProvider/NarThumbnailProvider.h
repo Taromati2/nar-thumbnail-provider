@@ -6,7 +6,7 @@
 
 #pragma comment(lib, "windowscodecs.lib")
 
-class PsdThumbnailProvider :
+class NarThumbnailProvider :
 	public IInitializeWithStream,
 	public IThumbnailProvider {
 public:
@@ -21,10 +21,10 @@ public:
 	// IThumbnailProvider
 	IFACEMETHODIMP GetThumbnail(UINT cx, HBITMAP *phbmp, WTS_ALPHATYPE *pdwAlpha);
 
-	PsdThumbnailProvider();
+	NarThumbnailProvider();
 
 protected:
-	~PsdThumbnailProvider();
+	~NarThumbnailProvider();
 
 private:
 	long m_cRef;

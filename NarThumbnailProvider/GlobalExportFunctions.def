@@ -1,4 +1,4 @@
-LIBRARY	"PsdThumbnailProvider"
+LIBRARY	"NarThumbnailProvider"
 EXPORTS
     DllGetClassObject   PRIVATE
     DllCanUnloadNow     PRIVATE

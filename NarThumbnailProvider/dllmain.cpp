@@ -3,9 +3,13 @@
 #include <shlobj.h> // For SHChangeNotify
 #include "ClassFactory.h" // For the class factory
 
-// {5BB45D32-AF01-414F-B60A-5E999B986681}
-const CLSID CLSID_RecipeThumbnailProvider =
-	{ 0x5bb45d32, 0xaf01, 0x414f, { 0xb6, 0xa, 0x5e, 0x99, 0x9b, 0x98, 0x66, 0x81 } };
+/* 67c1e27f-dfcb-4f4c-b4b8-1b80c5fde495 */
+const CLSID CLSID_RecipeThumbnailProvider ={ 
+	0x67c1e27f,
+	0xdfcb,
+	0x4f4c,
+	{0xb4, 0xb8, 0x1b, 0x80, 0xc5, 0xfd, 0xe4, 0x95}
+};
 
 HINSTANCE g_hInst = NULL;
 long g_cDllRef = 0;

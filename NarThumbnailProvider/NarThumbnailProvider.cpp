@@ -1,4 +1,4 @@
-#include "PsdThumbnailProvider.h"
+#include "NarThumbnailProvider.h"
 #include "GetThumbnail.h"
 #include <Shlwapi.h>
 
@@ -7,31 +7,31 @@
 extern HINSTANCE g_hInst;
 extern long g_cDllRef;
 
-PsdThumbnailProvider::PsdThumbnailProvider() : m_cRef(1), m_pStream(NULL) {
+NarThumbnailProvider::NarThumbnailProvider() : m_cRef(1), m_pStream(NULL) {
 	InterlockedIncrement(&g_cDllRef);
 }
 
-PsdThumbnailProvider::~PsdThumbnailProvider() {
+NarThumbnailProvider::~NarThumbnailProvider() {
 	InterlockedDecrement(&g_cDllRef);
 }
 
 // IUnknown
 
-IFACEMETHODIMP PsdThumbnailProvider::QueryInterface(REFIID riid, void **ppv) {
+IFACEMETHODIMP NarThumbnailProvider::QueryInterface(REFIID riid, void **ppv) {
 	static const QITAB qit[] =
 	{
-		QITABENT(PsdThumbnailProvider, IThumbnailProvider),
-		QITABENT(PsdThumbnailProvider, IInitializeWithStream),
+		QITABENT(NarThumbnailProvider, IThumbnailProvider),
+		QITABENT(NarThumbnailProvider, IInitializeWithStream),
 		{ 0 },
 	};
 	return QISearch(this, qit, riid, ppv);
 }
 
-IFACEMETHODIMP_(ULONG) PsdThumbnailProvider::AddRef() {
+IFACEMETHODIMP_(ULONG) NarThumbnailProvider::AddRef() {
 	return InterlockedIncrement(&m_cRef);
 }
 
-IFACEMETHODIMP_(ULONG) PsdThumbnailProvider::Release() {
+IFACEMETHODIMP_(ULONG) NarThumbnailProvider::Release() {
 	ULONG cRef = InterlockedDecrement(&m_cRef);
 
 	if (0 == cRef)
@@ -42,7 +42,7 @@ IFACEMETHODIMP_(ULONG) PsdThumbnailProvider::Release() {
 
 // IInitializeWithStream
 
-IFACEMETHODIMP PsdThumbnailProvider::Initialize(IStream *pStream, DWORD grfMode) {
+IFACEMETHODIMP NarThumbnailProvider::Initialize(IStream *pStream, DWORD grfMode) {
 	HRESULT hr = HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
 
 	if (m_pStream == NULL)
@@ -53,9 +53,9 @@ IFACEMETHODIMP PsdThumbnailProvider::Initialize(IStream *pStream, DWORD grfMode)
 
 // IThumbnailProvider
 
-IFACEMETHODIMP PsdThumbnailProvider::GetThumbnail(UINT cx, HBITMAP *phbmp, WTS_ALPHATYPE *pdwAlpha) {
+IFACEMETHODIMP NarThumbnailProvider::GetThumbnail(UINT cx, HBITMAP *phbmp, WTS_ALPHATYPE *pdwAlpha) {
 	*pdwAlpha = WTSAT_ARGB;
-	*phbmp = GetPSDThumbnail(m_pStream);
+	*phbmp = GetNARThumbnail(m_pStream);
 
 	// m_pStream->Release();
 

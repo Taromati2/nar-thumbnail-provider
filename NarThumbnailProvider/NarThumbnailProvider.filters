@@ -18,7 +18,7 @@
     <None Include="GlobalExportFunctions.def">
       <Filter>Source Files</Filter>
     </None>
-    <None Include=".\PsdThumbnailProvider.h">
+    <None Include=".\NarThumbnailProvider.h">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>
@@ -37,7 +37,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include=".\PsdThumbnailProvider.cpp">
+    <ClCompile Include=".\NarThumbnailProvider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GetThumbnail.cpp">

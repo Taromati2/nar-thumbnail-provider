@@ -1,6 +1,6 @@
-# PSD thumbnail provider
+# NAR thumbnail provider
 
-PSD thumbnail provider for Windows Explorer
+NAR thumbnail provider for Windows Explorer
 
 [Download latest installer](https://github.com/Agamnentzar/psd-thumbnail-provider/releases)
 

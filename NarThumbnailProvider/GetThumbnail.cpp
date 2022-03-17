@@ -4,6 +4,8 @@
 #include <math.h>
 
 #pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Gdiplus.lib")
+#pragma comment(lib, "Msimg32.lib")
 
 using namespace Gdiplus;
 
@@ -55,7 +57,7 @@ UINT Tell(IStream *pStream) {
 	return (UINT)newPos.QuadPart;
 }
 
-HBITMAP GetPSDThumbnail(IStream* stream) {
+HBITMAP GetNARThumbnail(IStream* stream) {
 	HBITMAP result = NULL;
 	UINT signature = ReadUInt32(stream);
 	USHORT version = ReadUInt16(stream);
@@ -188,8 +190,8 @@ HBITMAP GetPSDThumbnail(IStream* stream) {
 						}
 					}
 				}
-				delete lengths;
-				delete buffer;
+				delete[]lengths;
+				delete[]buffer;
 			} else {
 				int pixels = width * height;
 				BYTE* buffer = new BYTE[pixels];
@@ -204,7 +206,7 @@ HBITMAP GetPSDThumbnail(IStream* stream) {
 					}
 				}
 
-				delete buffer;
+				delete[]buffer;
 			}
 
 			bool allWhite = true;
@@ -259,7 +261,7 @@ HBITMAP GetPSDThumbnail(IStream* stream) {
 				}
 			}
 
-			delete data;
+			delete[]data;
 		}
 	}
 

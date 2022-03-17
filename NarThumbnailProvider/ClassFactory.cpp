@@ -1,5 +1,5 @@
 #include "ClassFactory.h"
-#include "PsdThumbnailProvider.h"
+#include "NarThumbnailProvider.h"
 #include <new>
 #include <Shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
@@ -47,7 +47,7 @@ IFACEMETHODIMP ClassFactory::CreateInstance(IUnknown *pUnkOuter, REFIID riid, vo
 		hr = E_OUTOFMEMORY;
 
 		// Create the COM component.
-		PsdThumbnailProvider *pExt = new (std::nothrow) PsdThumbnailProvider();
+		NarThumbnailProvider *pExt = new (std::nothrow) NarThumbnailProvider();
 
 		if (pExt) {
 			// Query the specified interface.
