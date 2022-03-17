@@ -2,7 +2,7 @@
 
 NAR thumbnail provider for Windows Explorer
 
-[Download latest installer](https://github.com/Agamnentzar/psd-thumbnail-provider/releases)
+[Download latest installer]()
 
 ## Supported systems
 
@@ -12,5 +12,5 @@ NAR thumbnail provider for Windows Explorer
 
 ### Requirements
 
-* [Visual Studio](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
+* [Visual Studio](https://visualstudio.microsoft.com/vs/community/)
 * [WIX Toolset](http://wixtoolset.org/) for generating setup
