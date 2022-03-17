@@ -14,7 +14,7 @@ const CLSID CLSID_RecipeThumbnailProvider ={
 HINSTANCE g_hInst = NULL;
 long g_cDllRef = 0;
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
+__declspec(dllexport) BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
 	switch (dwReason) {
 	case DLL_PROCESS_ATTACH:
 		// Hold the instance of this DLL module, we will use it to get the 
@@ -30,7 +30,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
 	return TRUE;
 }
 
-STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv) {
+_Check_return_
+STDAPI  DllGetClassObject(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID FAR* ppv) {
 	HRESULT hr = CLASS_E_CLASSNOTAVAILABLE;
 
 	if (IsEqualCLSID(CLSID_RecipeThumbnailProvider, rclsid)) {
@@ -46,6 +47,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv) {
 	return hr;
 }
 
+__control_entrypoint(DllExport)
 STDAPI DllCanUnloadNow(void) {
 	return g_cDllRef > 0 ? S_FALSE : S_OK;
 }

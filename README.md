@@ -2,7 +2,7 @@
 
 NAR thumbnail provider for Windows Explorer
 
-[Download latest installer]()
+[Download latest installer](https://github.com/Taromati2/nar-thumbnail-provider/releases)
 
 ## Supported systems
 

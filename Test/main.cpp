@@ -1,5 +1,9 @@
 #include <windows.h>
+#include <Shlwapi.h>
 #include "../NarThumbnailProvider/GetThumbnail.cpp"
+#include "../NarThumbnailProvider/LZMA.cpp"
+
+#pragma comment(lib, "Shlwapi.lib")
 
 static HBITMAP bitmap = NULL;
 
@@ -9,7 +13,7 @@ LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	switch (message) {
 	case WM_CREATE: {
 		IStream* stream;
-		SHCreateStreamOnFileEx(L"test4.psd", STGM_READ, FILE_ATTRIBUTE_NORMAL, false, NULL, &stream);
+		SHCreateStreamOnFileEx(L"test.nar", STGM_READ, FILE_ATTRIBUTE_NORMAL, false, NULL, &stream);
 		bitmap = GetNARThumbnail(stream);
 		BITMAP bm = {};
 		GetObject(bitmap, sizeof(bm), &bm);
@@ -60,7 +64,8 @@ LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	return result;
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+int WINAPI wWinMain(_In_ HINSTANCE	   hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR		   lpCmdLine, _In_ int		   nShowCmd)
+{
 	WNDCLASS windowClass = {};
 	windowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 	windowClass.lpfnWndProc = windowProc;

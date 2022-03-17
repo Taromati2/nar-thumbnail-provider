@@ -1,0 +1,20 @@
+extern "C" {
+	#include "../LZMA-SDK/C/CpuArch.c"
+
+	#include "../LZMA-SDK/C/7z.h"
+	#include "../LZMA-SDK/C/7zBuf.c"
+	#include "../LZMA-SDK/C/7zCrc.c"
+	#include "../LZMA-SDK/C/7zArcIn.c"
+	#include "../LZMA-SDK/C/Bcj2.c"
+	#include "../LZMA-SDK/C/Bra.c"
+	#include "../LZMA-SDK/C/Bra86.c"
+	#include "../LZMA-SDK/C/BraIA64.c"
+	#include "../LZMA-SDK/C/Delta.c"
+	#include "../LZMA-SDK/C/7zDec.c"
+	#include "../LZMA-SDK/C/7zAlloc.c"
+	#include "../LZMA-SDK/C/7zFile.c"
+	#include "../LZMA-SDK/C/LzmaDec.c"
+	#include "../LZMA-SDK/C/Lzma2Dec.c"
+	#include "../LZMA-SDK/C/7zStream.c"
+	#include "../LZMA-SDK/C/7zCrcOpt.c"
+}

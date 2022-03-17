@@ -1,300 +1,198 @@
+
 #include "GetThumbnail.h"
-#include "gdiplus.h"
-#include <Shlwapi.h>
-#include <math.h>
 
-#pragma comment(lib, "Shlwapi.lib")
-#pragma comment(lib, "Gdiplus.lib")
-#pragma comment(lib, "Msimg32.lib")
+#include <string_view>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
 
-using namespace Gdiplus;
+#include "../LZMA-SDK/C/CpuArch.h"
 
-void ReadData(IStream *pStream, BYTE *data, ULONG length) {
-	ULONG read, total = 0;
-	HRESULT hr;
+#include "../LZMA-SDK/C/7z.h"
+#include "../LZMA-SDK/C/7zAlloc.h"
+#include "../LZMA-SDK/C/7zBuf.h"
+#include "../LZMA-SDK/C/7zCrc.h"
+#include "../LZMA-SDK/C/7zFile.h"
+#include "../LZMA-SDK/C/7zVersion.h"
 
-	do {
-		hr = pStream->Read(data + total, length - total, &read);
-		total += read;
-	} while (total < length && hr == S_OK);
+
+struct DATABLOCK{
+	PBYTE data;
+	DWORD size;
+};
+void DESTORY(DATABLOCK *dbp) {
+	free(dbp->data);
+}
+DATABLOCK COPY(const DATABLOCK *dbp) {
+	DATABLOCK aret=*dbp;
+	aret.data = (PBYTE)malloc(aret.size);
+	if(aret.data)
+		memcpy(aret.data, dbp->data, aret.size);
+	else
+		aret.size = 0;
+	return aret;
 }
 
-UINT ReadUInt32(IStream *pStream) {
-	BYTE b[4];
-	ReadData(pStream, b, 4);
-	return b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3];
-}
-
-SHORT ReadInt16(IStream *pStream) {
-	BYTE b[2];
-	ReadData(pStream, b, 2);
-	return b[0] << 8 | b[1];
-}
-
-USHORT ReadUInt16(IStream *pStream) {
-	BYTE b[2];
-	ReadData(pStream, b, 2);
-	return b[0] << 8 | b[1];
-}
-
-BYTE ReadByte(IStream *pStream) {
-	BYTE b;
-	ReadData(pStream, &b, 1);
-	return b;
-}
-
-void Seek(IStream *pStream, int offset, DWORD origin) {
-	LARGE_INTEGER pos;
-	pos.QuadPart = offset;
-	pStream->Seek(pos, origin, NULL);
-}
-
-UINT Tell(IStream *pStream) {
-	LARGE_INTEGER pos;
-	ULARGE_INTEGER newPos;
-	pos.QuadPart = 0;
-	pStream->Seek(pos, STREAM_SEEK_CUR, &newPos);
-	return (UINT)newPos.QuadPart;
-}
-
-HBITMAP GetNARThumbnail(IStream* stream) {
-	HBITMAP result = NULL;
-	UINT signature = ReadUInt32(stream);
-	USHORT version = ReadUInt16(stream);
-
-	if (signature != 0x38425053 || version != 1)
+HBITMAP HICON_to_HBITMAP(HICON hIcon) {
+	if(!hIcon)
 		return NULL;
+	ICONINFO iconinfo;
+	GetIconInfo(hIcon, &iconinfo);
+	HBITMAP hResultBmp = iconinfo.hbmColor;
+	DeleteObject(iconinfo.hbmMask);
+	DeleteObject(hIcon);
+	return hResultBmp;
+}
 
-	Seek(stream, 6, STREAM_SEEK_CUR);
 
-	USHORT channels = ReadUInt16(stream);
-	int height = ReadUInt32(stream);
-	int width = ReadUInt32(stream);
-	USHORT bitsPerChannel = ReadUInt16(stream);
-	USHORT colorMode = ReadUInt16(stream);
-	UINT length = ReadUInt32(stream);
+#define kInputBufSize ((size_t)1 << 18)
+SRes IStream_Read(const ISeekInStream *p, void *buf, size_t *size) {
+	IStream *is = (IStream *)((const CFileInStream *)(p))->file.handle;
+	ULONG	 tmp;
+	is->Read(buf,*size,&tmp);
+	*size = tmp;
+	return SZ_OK;
+}
+SRes IStream_Seek(const ISeekInStream *p, Int64 *pos, ESzSeek origin) {
+	IStream *is = (IStream *)((const CFileInStream *)(p))->file.handle;
+	LARGE_INTEGER tmp{};
+	tmp.QuadPart = *pos;
+	ULARGE_INTEGER tmp2;
+	is->Seek(tmp,origin,&tmp2);
+	*pos = tmp2.QuadPart;
+	return SZ_OK;
+}
+void IStream_BIND_InFile(IStream *is, CFileInStream *SzFIS) {
+	SzFIS->file.handle = is;
+	SzFIS->vt.Read	   = IStream_Read;
+	SzFIS->vt.Seek	   = IStream_Seek;
+}
 
-	if (length > 0) {
-		Seek(stream, length, STREAM_SEEK_CUR);
+static const ISzAlloc g_Alloc = {SzAlloc, SzFree};
+std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
+	//TODO
+	ISzAlloc allocImp;
+	ISzAlloc allocTempImp;
+
+	CFileInStream archiveStream;
+	CLookToRead2  lookStream;
+	CSzArEx		  db;
+	SRes		  res;
+	char16_t	 *temp	   = NULL;
+	size_t		  tempSize = 0;
+	allocImp			   = g_Alloc;
+	allocTempImp		   = g_Alloc;
+	std::vector<DATABLOCK> aret;
+
+	IStream_BIND_InFile(is,&archiveStream);
+
+	archiveStream.wres = 0;
+	LookToRead2_CreateVTable(&lookStream, False);
+	lookStream.buf = NULL;
+
+	res = SZ_OK;
+
+	{
+		lookStream.buf = (Byte *)ISzAlloc_Alloc(&allocImp, kInputBufSize);
+		if(!lookStream.buf)
+			res = SZ_ERROR_MEM;
+		else {
+			lookStream.bufSize	  = kInputBufSize;
+			lookStream.realStream = &archiveStream.vt;
+			LookToRead2_Init(&lookStream);
+		}
 	}
 
-	UINT resourcesLength = ReadUInt32(stream);
-	UINT reasourceOffset = Tell(stream);
-	UINT thumbnailOffset = 0;
-	UINT resourceAdvanced = 0;
+	CrcGenerateTable();
 
-	while (resourcesLength > resourceAdvanced) {
-		Seek(stream, 4, STREAM_SEEK_CUR);
+	SzArEx_Init(&db);
 
-		USHORT id = ReadUInt16(stream);
-		BYTE strl = ReadByte(stream);
-
-		Seek(stream, strl % 2 == 0 ? strl + 1 : strl, STREAM_SEEK_CUR);
-
-		length = ReadUInt32(stream);
-
-		if (id == 1036) {
-			thumbnailOffset = Tell(stream);
-			break;
-		}
-
-		Seek(stream, length % 2 ? length + 1 : length, STREAM_SEEK_CUR);
-
-		resourceAdvanced += 6 + 1 + (strl % 2 == 0 ? strl + 1 : strl) +
-			4 + (length % 2 ? length + 1 : length);
+	if(res == SZ_OK) {
+		res = SzArEx_Open(&db, &lookStream.vt, &allocImp, &allocTempImp);
 	}
 
-	// read composite image
-	if (colorMode == 3 && ((width <= 256 && height <= 256) || !thumbnailOffset)) {
-		Seek(stream, reasourceOffset + resourcesLength, STREAM_SEEK_SET);
+	if(res == SZ_OK) {
+		UInt32 i;
 
-		UINT layerAndMaskInfoLength = ReadUInt32(stream);
-		UINT layerAndMastInfoOffset = Tell(stream);
+		/*
+		  if you need cache, use these 3 variables.
+		  if you use external function, you can make these variable as static.
+		*/
+		UInt32 blockIndex	 = 0xFFFFFFFF; /* it can have any value before first call (if outBuffer = 0) */
+		Byte	 *outBuffer	 = 0;		   /* it must be 0 before first call for each new archive. */
+		size_t outBufferSize = 0;		   /* it can have any value before first call (if outBuffer = 0) */
 
-		UINT layerInfoLength = ReadUInt32(stream);
-		SHORT layerCount = ReadInt16(stream);
-		bool globalAlpha = layerCount < 0;
+		for(i = 0; i < db.NumFiles; i++) {
+			size_t offset			= 0;
+			size_t outSizeProcessed = 0;
+			// const CSzFileItem *f = db.Files + i;
+			size_t		  len;
+			const BoolInt isDir = SzArEx_IsDir(&db, i);
+			if(isDir)
+				continue;
+			len = SzArEx_GetFileNameUtf16(&db, i, NULL);
+			// len = SzArEx_GetFullNameLen(&db, i);
 
-		Seek(stream, layerAndMastInfoOffset + layerAndMaskInfoLength, STREAM_SEEK_SET);
-
-		USHORT compression = ReadUInt16(stream);
-
-		int channelCount = 3;
-		int offsets[16] = { 2, 1, 0 };
-
-		if (channels && channels > 3) {
-			for (int i = 3; i < channels; i++) {
-				offsets[i] = i;
-				channelCount++;
-			}
-		} else if (globalAlpha) {
-			offsets[3] = 3;
-			channelCount++;
-		}
-
-		if (compression == 1 || compression == 0) {
-			int dataLength = width * height * 4;
-			BYTE* data = new BYTE[dataLength];
-
-			for (int i = 0; i < dataLength; i++) {
-				data[i] = 0xff;
-			}
-
-			if (compression == 1) {
-				USHORT* lengths = new USHORT[channelCount * height];
-				int step = 4;
-				int maxLength = 0;
-
-				for (int o = 0, li = 0; o < channelCount; o++) {
-					for (int y = 0; y < height; y++, li++) {
-						lengths[li] = ReadUInt16(stream);
-						maxLength = maxLength < lengths[li] ? lengths[li] : maxLength;
-					}
-				}
-
-				BYTE* buffer = new BYTE[maxLength];
-
-				for (int c = 0, li = 0; c < channelCount; c++) {
-					int offset = offsets[c];
-					int extra = c > 3 || offset > 3;
-
-					if (extra) {
-						for (int y = 0; y < height; y++, li++) {
-							Seek(stream, lengths[li], STREAM_SEEK_CUR);
-						}
-					}
-					else {
-						for (int y = 0, p = offset; y < height; y++, li++) {
-							int length = lengths[li];
-							ReadData(stream, buffer, length);
-
-							for (int i = 0; i < length; i++) {
-								BYTE header = buffer[i];
-
-								if (header >= 128) {
-									BYTE value = buffer[++i];
-									header = (256 - header);
-
-									for (int j = 0; j <= header; j++) {
-										data[p] = value;
-										p += step;
-									}
-								}
-								else { // header < 128
-									for (int j = 0; j <= header; j++) {
-										data[p] = buffer[++i];
-										p += step;
-									}
-								}
-							}
-						}
-					}
-				}
-				delete[]lengths;
-				delete[]buffer;
-			} else {
-				int pixels = width * height;
-				BYTE* buffer = new BYTE[pixels];
-				if (channelCount > 4) channelCount = 4;
-
-				for (int c = 0; c < channelCount; c++) {
-					int o = offsets[c];
-					ReadData(stream, buffer, pixels);
-
-					for (int i = 0; i < pixels; i++) {
-						data[i * 4 + o] = buffer[i];
-					}
-				}
-
-				delete[]buffer;
-			}
-
-			bool allWhite = true;
-
-			for (int i = 0; i < dataLength; i++) {
-				if (data[i] != 0xff) {
-					allWhite = false;
+			if(len > tempSize) {
+				SzFree(NULL, temp);
+				tempSize = len;
+				temp	 = (char16_t *)SzAlloc(NULL, tempSize * sizeof(temp[0]));
+				if(!temp) {
+					res = SZ_ERROR_MEM;
 					break;
 				}
 			}
 
-			if (!allWhite) {
-				if (width > 256 || height > 256) {
-					HBITMAP fullBitmap = CreateBitmap(width, height, 1, 32, data);
-					int thumbWidth, thumbHeight;
-
-					if (width > height) {
-						thumbWidth = 256;
-						thumbHeight = height * thumbWidth / width;
-					}
-					else {
-						thumbHeight = 256;
-						thumbWidth = width * thumbHeight / height;
-					}
-
-					BLENDFUNCTION fnc;
-					fnc.BlendOp = AC_SRC_OVER;
-					fnc.BlendFlags = 0;
-					fnc.SourceConstantAlpha = 0xFF;
-					fnc.AlphaFormat = AC_SRC_ALPHA;
-
-					HDC dc = GetDC(NULL);
-					HDC srcDC = CreateCompatibleDC(dc);
-					HDC memDC = CreateCompatibleDC(dc);
-					result = CreateCompatibleBitmap(dc, thumbWidth, thumbHeight);
-					SelectObject(memDC, result);
-					SelectObject(srcDC, fullBitmap);
-
-					RECT rect = {};
-					rect.right = thumbWidth;
-					rect.bottom = thumbHeight;
-					FillRect(memDC, &rect, (HBRUSH)GetStockObject(NULL_BRUSH));
-					AlphaBlend(memDC, 0, 0, thumbWidth, thumbHeight, srcDC, 0, 0, width, height, fnc);
-
-					DeleteObject(fullBitmap);
-					DeleteDC(srcDC);
-					DeleteDC(memDC);
-					ReleaseDC(NULL, dc);
-				}
-				else {
-					result = CreateBitmap(width, height, 1, 32, data);
-				}
+			SzArEx_GetFileNameUtf16(&db, i, (UInt16 *)temp);
+			::std::u16string_view name(temp,tempSize);
+			if(!name.starts_with(u".nar_icon"))
+				continue;
+			{
+				res = SzArEx_Extract(&db, &lookStream.vt, i,
+									 &blockIndex, &outBuffer, &outBufferSize,
+									 &offset, &outSizeProcessed,
+									 &allocImp, &allocTempImp);
+				if(res != SZ_OK)
+					break;
 			}
+			DATABLOCK tmp = {outBuffer, outBufferSize};
+			aret.push_back(COPY(&tmp));
 
-			delete[]data;
+			ISzAlloc_Free(&allocImp, outBuffer);
 		}
 	}
 
-	// read thumbnail resource
-	if (!result && thumbnailOffset) {
-		Seek(stream, thumbnailOffset, STREAM_SEEK_SET);
-		ULONG_PTR token;
-		GdiplusStartupInput input;
+	SzFree(NULL, temp);
+	SzArEx_Free(&db, &allocImp);
+	ISzAlloc_Free(&allocImp, lookStream.buf);
 
-		if (Ok == GdiplusStartup(&token, &input, NULL)) {
-			Seek(stream, 4 + 4 + 4 + 4 + 4 + 4 + 2 + 2, STREAM_SEEK_CUR);
-
-			BYTE *data = new BYTE[length];
-			ReadData(stream, data, length);
-			IStream *memory = SHCreateMemStream(data, length);
-
-			if (memory) {
-				Seek(memory, 0, STREAM_SEEK_SET);
-
-				Bitmap *bitmap = Bitmap::FromStream(memory);
-
-				if (bitmap) {
-					Color color(0, 255, 255, 255);
-					bitmap->GetHBITMAP(color, &result);
-					delete bitmap;
-				}
-
-				memory->Release(); // test
-			}
-		}
-
-		GdiplusShutdown(token);
+	if(res == SZ_OK) {
+		//Everything is Ok
+		return aret;
 	}
 
+	return {};
+}
+HICON CreateIconFromMemory(PBYTE iconData, size_t iconDataSize) {
+	int offset = LookupIconIdFromDirectory(iconData, TRUE);
+	return CreateIconFromResource(iconData + offset, iconDataSize - offset, TRUE, 0x30000);
+}
+HBITMAP GetNARThumbnail(IStream* stream) {
+	std::vector<DATABLOCK> dbs	  = GetIconResourcesFromNarFStream(stream);
+	std::srand(std::time(NULL));
+	auto size = dbs.size();
+	HICON hIcon = NULL;
+	while(size && !hIcon) {
+		auto  index = rand() % size;
+		auto &db	= dbs[index];
+		hIcon		= CreateIconFromMemory(db.data, db.size);
+		if(!hIcon) {
+			dbs.erase(dbs.begin() + index);
+			size--;
+		}
+	}
+	HBITMAP result = HICON_to_HBITMAP(hIcon);
+	for(auto&db:dbs)
+		DESTORY(&db);
 	return result;
 }

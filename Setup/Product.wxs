@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="NAR Thumbnail Provider" Language="1033" Version="1.5.0.0" Manufacturer="Agamnentzar" UpgradeCode="cb88ff56-355c-48fd-8343-8d3f40ef02ce">
+	<Product Id="*" Name="NAR Thumbnail Provider" Language="1033" Version="0.0.0.1" Manufacturer="steve02081504" UpgradeCode="79954f90-34f8-4250-bb0d-3fd7ee59c02e">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 		<Condition Message="You need to be an administrator to install this product.">Privileged</Condition>
 		<MajorUpgrade Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of NAR Thumbnail Provider is already installed." />
@@ -12,19 +12,31 @@
 		</Feature>
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="System64Folder" Name="SystemFolderName">
-				<Component Id="MainDllComponent" Guid="*">
-					<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\NarThumbnailProvider\x64\Release\NarThumbnailProvider.dll" />
-				</Component>
-			</Directory>
+			<?if $(var.Platform)=x86 ?>
+				<Directory Id="SystemFolder" Name="SystemFolderName">
+					<Component Id="MainDllComponent" Guid="*">
+						<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\Release\NarThumbnailProvider.dll" />
+					</Component>
+				</Directory>
+			<?else ?>
+				<Directory Id="System64Folder" Name="SystemFolderName">
+					<Component Id="MainDllComponent" Guid="*">
+						<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\x64\Release\NarThumbnailProvider.dll" />
+					</Component>
+				</Directory>
+			<?endif ?>
 		</Directory>
 
 		<DirectoryRef Id="TARGETDIR">
 			<Component Id="RegistryEntries" Guid="*">
 				<RegistryKey Root="HKCR" Key="CLSID\{67C1E27F-DFCB-4F4C-B4B8-1B80C5FDE495}" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
-					<RegistryValue Type="string" Value="Agamnentzar.NarThumbnailProvider Class" />
+					<RegistryValue Type="string" Value="NarThumbnailProvider Class" />
 					<RegistryKey Key="InprocServer32" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
-						<RegistryValue Type="string" Value="[System64Folder]NarThumbnailProvider.dll" />
+						<?if $(var.Platform)=x86 ?>
+							<RegistryValue Type="string" Value="[SystemFolder]NarThumbnailProvider.dll" />
+						<?else ?>
+							<RegistryValue Type="string" Value="[System64Folder]NarThumbnailProvider.dll" />
+						<?endif ?>
 						<RegistryValue Type="string" Name="ThreadingModel" Value="Apartment" />
 					</RegistryKey>
 				</RegistryKey>
