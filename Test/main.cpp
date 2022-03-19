@@ -14,7 +14,7 @@ LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_CREATE: {
 		IStream* stream;
 		SHCreateStreamOnFileEx(L"test.nar", STGM_READ, FILE_ATTRIBUTE_NORMAL, false, NULL, &stream);
-		bitmap = GetNARThumbnail(stream);
+		bitmap	  = GetNARThumbnail(256, stream);
 		BITMAP bm = {};
 		GetObject(bitmap, sizeof(bm), &bm);
 		RECT rc, rcClient;

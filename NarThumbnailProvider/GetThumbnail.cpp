@@ -173,11 +173,11 @@ std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
 
 	return {};
 }
-HICON CreateIconFromMemory(PBYTE iconData, size_t iconDataSize) {
-	int offset = LookupIconIdFromDirectory(iconData, TRUE);
-	return CreateIconFromResource(iconData + offset, iconDataSize - offset, TRUE, 0x30000);
+HICON CreateIconFromMemory(PBYTE iconData, size_t iconDataSize,UINT cx) {
+	auto offset = LookupIconIdFromDirectoryEx(iconData, TRUE, cx, cx, 0);
+	return CreateIconFromResourceEx(iconData + offset, iconDataSize - offset, TRUE, 0x30000, cx, cx, 0);
 }
-HBITMAP GetNARThumbnail(IStream* stream) {
+HBITMAP GetNARThumbnail(UINT cx,IStream* stream) {
 	std::vector<DATABLOCK> dbs	  = GetIconResourcesFromNarFStream(stream);
 	std::srand(std::time(NULL));
 	auto size = dbs.size();
@@ -185,7 +185,7 @@ HBITMAP GetNARThumbnail(IStream* stream) {
 	while(size && !hIcon) {
 		auto  index = rand() % size;
 		auto &db	= dbs[index];
-		hIcon		= CreateIconFromMemory(db.data, db.size);
+		hIcon		= CreateIconFromMemory(db.data, db.size, cx);
 		if(!hIcon) {
 			dbs.erase(dbs.begin() + index);
 			size--;

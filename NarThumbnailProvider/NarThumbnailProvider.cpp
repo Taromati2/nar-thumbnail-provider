@@ -55,7 +55,7 @@ IFACEMETHODIMP NarThumbnailProvider::Initialize(IStream *pStream, DWORD grfMode)
 
 IFACEMETHODIMP NarThumbnailProvider::GetThumbnail(UINT cx, HBITMAP *phbmp, WTS_ALPHATYPE *pdwAlpha) {
 	*pdwAlpha = WTSAT_ARGB;
-	*phbmp = GetNARThumbnail(m_pStream);
+	*phbmp = GetNARThumbnail(cx,m_pStream);
 
 	// m_pStream->Release();
 

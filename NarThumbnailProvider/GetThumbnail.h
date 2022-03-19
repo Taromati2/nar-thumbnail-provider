@@ -2,4 +2,4 @@
 
 #include <windows.h>
 
-HBITMAP GetNARThumbnail(IStream* stream);
+HBITMAP GetNARThumbnail(UINT cx,IStream* stream);
