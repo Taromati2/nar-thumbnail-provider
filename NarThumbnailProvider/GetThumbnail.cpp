@@ -145,7 +145,7 @@ std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
 
 			SzArEx_GetFileNameUtf16(&db, i, (UInt16 *)temp);
 			::std::u16string_view name(temp,tempSize);
-			if(!name.starts_with(u".nar_icon"))
+			if(!name.starts_with(u".nar_icon/"))
 				continue;
 			{
 				res = SzArEx_Extract(&db, &lookStream.vt, i,
@@ -158,8 +158,8 @@ std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
 			DATABLOCK tmp = {outBuffer, outBufferSize};
 			aret.push_back(COPY(&tmp));
 
-			ISzAlloc_Free(&allocImp, outBuffer);
 		}
+		ISzAlloc_Free(&allocImp, outBuffer);
 	}
 
 	SzFree(NULL, temp);
