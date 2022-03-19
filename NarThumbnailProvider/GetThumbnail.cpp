@@ -157,7 +157,6 @@ std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
 			}
 			DATABLOCK tmp = {outBuffer, outBufferSize};
 			aret.push_back(COPY(&tmp));
-
 		}
 		ISzAlloc_Free(&allocImp, outBuffer);
 	}
