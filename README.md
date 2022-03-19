@@ -1,5 +1,5 @@
 # NAR thumbnail provider
-![图片](https://user-images.githubusercontent.com/31927825/159008153-604cb7d3-0d53-4354-92ed-c87595c9eea9.png)  
+![图片](https://user-images.githubusercontent.com/31927825/159116281-9b32ab89-2bad-433b-85b0-bda347773b77.png)  
 NAR thumbnail provider for Windows Explorer  
 [Download latest installer](https://github.com/Taromati2/nar-thumbnail-provider/releases/latest)  
 
