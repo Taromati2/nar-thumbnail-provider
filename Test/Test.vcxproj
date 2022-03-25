@@ -26,7 +26,6 @@
     <ClCompile Include="..\minizip-ng\mz_os_win32.c" />
     <ClCompile Include="..\minizip-ng\mz_strm.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_buf.c" />
-    <ClCompile Include="..\minizip-ng\mz_strm_bzip.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_lzma.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_mem.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_os_win32.c" />
@@ -36,6 +35,7 @@
     <ClCompile Include="..\minizip-ng\mz_strm_zstd.c" />
     <ClCompile Include="..\minizip-ng\mz_zip.c" />
     <ClCompile Include="..\minizip-ng\mz_zip_rw.c" />
+    <ClCompile Include="..\NarThumbnailProvider\zip_reader_open_IStream.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

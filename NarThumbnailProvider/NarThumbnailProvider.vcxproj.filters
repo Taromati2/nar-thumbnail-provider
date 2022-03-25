@@ -32,9 +32,6 @@
     <ClCompile Include="..\minizip-ng\mz_strm_lzma.c">
       <Filter>minizip</Filter>
     </ClCompile>
-    <ClCompile Include="..\minizip-ng\mz_strm_bzip.c">
-      <Filter>minizip</Filter>
-    </ClCompile>
     <ClCompile Include="..\minizip-ng\mz_strm_buf.c">
       <Filter>minizip</Filter>
     </ClCompile>
@@ -56,11 +53,13 @@
     <ClCompile Include="..\minizip-ng\mz_compat.c">
       <Filter>minizip</Filter>
     </ClCompile>
+    <ClCompile Include="zip_reader_open_IStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClassFactory.h" />
     <ClInclude Include="GetThumbnail.h" />
     <ClInclude Include="NarThumbnailProvider.h" />
+    <ClInclude Include="zip_reader_open_IStream.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GlobalExportFunctions.def" />

@@ -22,6 +22,7 @@
     <ClInclude Include="ClassFactory.h" />
     <ClInclude Include="GetThumbnail.h" />
     <ClInclude Include="NarThumbnailProvider.h" />
+    <ClInclude Include="zip_reader_open_IStream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\minizip-ng\mz_compat.c" />
@@ -31,7 +32,6 @@
     <ClCompile Include="..\minizip-ng\mz_os_win32.c" />
     <ClCompile Include="..\minizip-ng\mz_strm.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_buf.c" />
-    <ClCompile Include="..\minizip-ng\mz_strm_bzip.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_lzma.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_mem.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_os_win32.c" />
@@ -45,6 +45,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GetThumbnail.cpp" />
     <ClCompile Include="NarThumbnailProvider.cpp" />
+    <ClCompile Include="zip_reader_open_IStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GlobalExportFunctions.def" />
@@ -150,6 +151,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,6 +162,7 @@
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -192,6 +196,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -201,6 +207,7 @@
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

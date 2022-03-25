@@ -44,15 +44,13 @@
     <ClCompile Include="..\minizip-ng\mz_strm_lzma.c">
       <Filter>minizip</Filter>
     </ClCompile>
-    <ClCompile Include="..\minizip-ng\mz_strm_bzip.c">
-      <Filter>minizip</Filter>
-    </ClCompile>
     <ClCompile Include="..\minizip-ng\mz_strm_buf.c">
       <Filter>minizip</Filter>
     </ClCompile>
     <ClCompile Include="..\minizip-ng\mz_strm.c">
       <Filter>minizip</Filter>
     </ClCompile>
+    <ClCompile Include="..\NarThumbnailProvider\zip_reader_open_IStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="minizip">
