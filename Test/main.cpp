@@ -1,7 +1,6 @@
 #include <windows.h>
 #include <Shlwapi.h>
 #include "../NarThumbnailProvider/GetThumbnail.cpp"
-#include "../NarThumbnailProvider/LZMA.cpp"
 
 #pragma comment(lib, "Shlwapi.lib")
 

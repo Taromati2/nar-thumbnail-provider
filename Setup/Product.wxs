@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="NAR Thumbnail Provider" Language="1033" Version="1.0.0.2" Manufacturer="steve02081504" UpgradeCode="79954f90-34f8-4250-bb0d-3fd7ee59c02e">
+	<Product Id="*" Name="NAR Thumbnail Provider" Language="1033" Version="1.0.1.0" Manufacturer="steve02081504" UpgradeCode="79954f90-34f8-4250-bb0d-3fd7ee59c02e">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 		<Condition Message="You need to be an administrator to install this product.">Privileged</Condition>
 		<MajorUpgrade Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of NAR Thumbnail Provider is already installed." />

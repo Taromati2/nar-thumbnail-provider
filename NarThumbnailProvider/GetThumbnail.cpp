@@ -6,15 +6,185 @@
 #include <ctime>
 #include <cstdlib>
 
-#include "../LZMA-SDK/C/CpuArch.h"
+#include "../minizip-ng/mz.h"
+#include "../minizip-ng/mz_strm.h"
+#include "../minizip-ng/mz_zip.h"
+#include "../minizip-ng/mz_zip_rw.h"
 
-#include "../LZMA-SDK/C/7z.h"
-#include "../LZMA-SDK/C/7zAlloc.h"
-#include "../LZMA-SDK/C/7zBuf.h"
-#include "../LZMA-SDK/C/7zCrc.h"
-#include "../LZMA-SDK/C/7zFile.h"
-#include "../LZMA-SDK/C/7zVersion.h"
+typedef struct mz_zip_reader_s {
+    void        *zip_handle;
+    void        *file_stream;
+    void        *buffered_stream;
+    void        *split_stream;
+    void        *mem_stream;
+    void        *hash;
+    uint16_t    hash_algorithm;
+    uint16_t    hash_digest_size;
+    mz_zip_file *file_info;
+    const char  *pattern;
+    uint8_t     pattern_ignore_case;
+    const char  *password;
+    void        *overwrite_userdata;
+    mz_zip_reader_overwrite_cb
+                overwrite_cb;
+    void        *password_userdata;
+    mz_zip_reader_password_cb
+                password_cb;
+    void        *progress_userdata;
+    mz_zip_reader_progress_cb
+                progress_cb;
+    uint32_t    progress_cb_interval_ms;
+    void        *entry_userdata;
+    mz_zip_reader_entry_cb
+                entry_cb;
+    uint8_t     raw;
+    uint8_t     buffer[UINT16_MAX];
+    int32_t     encoding;
+    uint8_t     sign_required;
+    uint8_t     cd_verified;
+    uint8_t     cd_zipped;
+    uint8_t     entry_verified;
+    uint8_t     recover;
+} mz_zip_reader;
 
+/***************************************************************************/
+
+typedef struct mz_stream_IStream_s {
+	mz_stream stream;
+	IStream	*ps;
+} mz_stream_IStream;
+
+/***************************************************************************/
+
+int32_t mz_stream_IStream_open(void *stream, const char *path, int32_t mode) {
+	mz_stream_IStream *mem = (mz_stream_IStream *)stream;
+	int32_t		   err = MZ_OK;
+
+	mem->ps = (IStream *)path;
+
+	return err;
+}
+
+int32_t mz_stream_IStream_is_open(void *stream) {
+	mz_stream_IStream *mem = (mz_stream_IStream *)stream;
+	if(mem->ps == NULL)
+		return MZ_OPEN_ERROR;
+	return MZ_OK;
+}
+
+int32_t mz_stream_IStream_read(void *stream, void *buf, int32_t size) {
+	mz_stream_IStream *mem = (mz_stream_IStream *)stream;
+	ULONG			   ret;
+	mem->ps->Read(buf,size,&ret);
+
+	return ret;
+}
+
+int32_t mz_stream_IStream_write(void *stream, const void *buf, int32_t size) {
+	return 0;
+}
+
+int64_t mz_stream_IStream_tell(void *stream) {
+	mz_stream_IStream *mem = (mz_stream_IStream *)stream;
+	ULARGE_INTEGER	   ret;
+	mem->ps->Seek({0}, STREAM_SEEK_CUR,&ret );
+	return ret.QuadPart;
+}
+
+int32_t mz_stream_IStream_seek(void *stream, int64_t offset, int32_t origin) {
+	mz_stream_IStream *mem	   = (mz_stream_IStream *)stream;
+	int64_t		   new_pos = 0;
+	int32_t		   err	   = MZ_OK;
+	LARGE_INTEGER	   offL	   = {};
+	offL.QuadPart			   = offset;
+	switch(origin) {
+	case MZ_SEEK_CUR:
+		mem->ps->Seek(offL, STREAM_SEEK_CUR, NULL);
+		break;
+	case MZ_SEEK_END:
+		mem->ps->Seek(offL, STREAM_SEEK_END, NULL);
+		break;
+	case MZ_SEEK_SET:
+		mem->ps->Seek(offL, STREAM_SEEK_SET, NULL);
+		break;
+	default:
+		return MZ_SEEK_ERROR;
+	}
+
+	return MZ_OK;
+}
+
+int32_t mz_stream_IStream_close(void *stream) {
+	/* We never return errors */
+	return MZ_OK;
+}
+
+int32_t mz_stream_IStream_error(void *stream) {
+	/* We never return errors */
+	return MZ_OK;
+}
+
+extern mz_stream_vtbl mz_stream_IStream_vtbl;
+void *mz_stream_IStream_create(void **stream) {
+	mz_stream_IStream *mem = NULL;
+
+	mem = (mz_stream_IStream *)MZ_ALLOC(sizeof(mz_stream_IStream));
+	if(mem != NULL) {
+		memset(mem, 0, sizeof(mz_stream_IStream));
+		mem->stream.vtbl = &mz_stream_IStream_vtbl;
+	}
+	if(stream != NULL)
+		*stream = mem;
+
+	return mem;
+}
+
+void mz_stream_IStream_delete(void **stream) {
+	mz_stream_IStream *mem = NULL;
+	if(stream == NULL)
+		return;
+	mem = (mz_stream_IStream *)*stream;
+	if(mem != NULL) {
+		MZ_FREE(mem);
+	}
+	*stream = NULL;
+}
+
+
+/***************************************************************************/
+
+static mz_stream_vtbl mz_stream_IStream_vtbl = {
+    mz_stream_IStream_open,
+    mz_stream_IStream_is_open,
+    mz_stream_IStream_read,
+    mz_stream_IStream_write,
+    mz_stream_IStream_tell,
+    mz_stream_IStream_seek,
+    mz_stream_IStream_close,
+    mz_stream_IStream_error,
+    mz_stream_IStream_create,
+    mz_stream_IStream_delete,
+    NULL,
+    NULL
+};
+
+//
+
+int32_t mz_zip_reader_open_IStream(void *handle, IStream *ps) {
+	mz_zip_reader *reader = (mz_zip_reader *)handle;
+	int32_t		   err	  = MZ_OK;
+
+	mz_zip_reader_close(handle);
+
+	mz_stream_IStream_create(&reader->mem_stream);
+
+	mz_stream_IStream_open(reader->mem_stream, (char*)ps, MZ_OPEN_MODE_READ);
+
+	if(err == MZ_OK)
+		err = mz_zip_reader_open(handle, reader->mem_stream);
+
+	return err;
+}
 
 struct DATABLOCK{
 	PBYTE data;
@@ -44,132 +214,66 @@ HBITMAP HICON_to_HBITMAP(HICON hIcon) {
 	return hResultBmp;
 }
 
-
-#define kInputBufSize ((size_t)1 << 18)
-SRes IStream_Read(const ISeekInStream *p, void *buf, size_t *size) {
-	IStream *is = (IStream *)((const CFileInStream *)(p))->file.handle;
-	ULONG	 tmp;
-	is->Read(buf,*size,&tmp);
-	*size = tmp;
-	return SZ_OK;
-}
-SRes IStream_Seek(const ISeekInStream *p, Int64 *pos, ESzSeek origin) {
-	IStream *is = (IStream *)((const CFileInStream *)(p))->file.handle;
-	LARGE_INTEGER tmp{};
-	tmp.QuadPart = *pos;
-	ULARGE_INTEGER tmp2;
-	is->Seek(tmp,origin,&tmp2);
-	*pos = tmp2.QuadPart;
-	return SZ_OK;
-}
-void IStream_BIND_InFile(IStream *is, CFileInStream *SzFIS) {
-	SzFIS->file.handle = is;
-	SzFIS->vt.Read	   = IStream_Read;
-	SzFIS->vt.Seek	   = IStream_Seek;
-}
-
-static const ISzAlloc g_Alloc = {SzAlloc, SzFree};
 std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
-	//TODO
-	ISzAlloc allocImp;
-	ISzAlloc allocTempImp;
+	mz_zip_file *file_info = NULL;
+	int32_t		 err	   = MZ_OK;
+	void		 *reader = NULL;
 
-	CFileInStream archiveStream;
-	CLookToRead2  lookStream;
-	CSzArEx		  db;
-	SRes		  res;
-	char16_t	 *temp	   = NULL;
-	size_t		  tempSize = 0;
-	allocImp			   = g_Alloc;
-	allocTempImp		   = g_Alloc;
-	std::vector<DATABLOCK> aret;
-
-	IStream_BIND_InFile(is,&archiveStream);
-
-	archiveStream.wres = 0;
-	LookToRead2_CreateVTable(&lookStream, False);
-	lookStream.buf = NULL;
-
-	res = SZ_OK;
-
+	mz_zip_reader_create(&reader);
+	err = mz_zip_reader_open_IStream(reader, is);
 	{
-		lookStream.buf = (Byte *)ISzAlloc_Alloc(&allocImp, kInputBufSize);
-		if(!lookStream.buf)
-			res = SZ_ERROR_MEM;
-		else {
-			lookStream.bufSize	  = kInputBufSize;
-			lookStream.realStream = &archiveStream.vt;
-			LookToRead2_Init(&lookStream);
+		mz_zip_reader *treader = (mz_zip_reader *)reader;
+
+	}
+	if(err != MZ_OK) {
+		mz_zip_reader_delete(&reader);
+		return {};
+	}
+
+	err = mz_zip_reader_goto_first_entry(reader);
+
+	if(err != MZ_OK && err != MZ_END_OF_LIST) {
+		mz_zip_reader_delete(&reader);
+		return {};
+	}
+
+	std::vector<DATABLOCK> aret;
+	/* Enumerate all entries in the archive */
+	do {
+		err = mz_zip_reader_entry_get_info(reader, &file_info);
+
+		if(err != MZ_OK) {
+			break;
 		}
-	}
 
-	CrcGenerateTable();
-
-	SzArEx_Init(&db);
-
-	if(res == SZ_OK) {
-		res = SzArEx_Open(&db, &lookStream.vt, &allocImp, &allocTempImp);
-	}
-
-	if(res == SZ_OK) {
-		UInt32 i;
-
-		/*
-		  if you need cache, use these 3 variables.
-		  if you use external function, you can make these variable as static.
-		*/
-		UInt32 blockIndex	 = 0xFFFFFFFF; /* it can have any value before first call (if outBuffer = 0) */
-		Byte	 *outBuffer	 = 0;		   /* it must be 0 before first call for each new archive. */
-		size_t outBufferSize = 0;		   /* it can have any value before first call (if outBuffer = 0) */
-
-		for(i = 0; i < db.NumFiles; i++) {
-			size_t offset			= 0;
-			size_t outSizeProcessed = 0;
-			// const CSzFileItem *f = db.Files + i;
-			size_t		  len;
-			const BoolInt isDir = SzArEx_IsDir(&db, i);
-			if(isDir)
-				continue;
-			len = SzArEx_GetFileNameUtf16(&db, i, NULL);
-			// len = SzArEx_GetFullNameLen(&db, i);
-
-			if(len > tempSize) {
-				SzFree(NULL, temp);
-				tempSize = len;
-				temp	 = (char16_t *)SzAlloc(NULL, tempSize * sizeof(temp[0]));
-				if(!temp) {
-					res = SZ_ERROR_MEM;
-					break;
-				}
+		if(file_info->flag & MZ_ZIP_FLAG_ENCRYPTED || !file_info->uncompressed_size)
+			goto next_file;
+		{
+			::std::u8string_view name((char8_t *)file_info->filename, file_info->filename_size);
+			if(!name.starts_with(u8".nar_icon/"))
+				goto next_file;
+			DATABLOCK tmp = {(PBYTE)malloc(file_info->uncompressed_size), file_info->uncompressed_size};
+			if(tmp.data) {
+				mz_zip_reader_entry_save_buffer(reader, tmp.data, tmp.size);
+				aret.push_back(tmp);
 			}
-
-			SzArEx_GetFileNameUtf16(&db, i, (UInt16 *)temp);
-			::std::u16string_view name(temp,tempSize);
-			if(!name.starts_with(u".nar_icon/"))
-				continue;
-			{
-				res = SzArEx_Extract(&db, &lookStream.vt, i,
-									 &blockIndex, &outBuffer, &outBufferSize,
-									 &offset, &outSizeProcessed,
-									 &allocImp, &allocTempImp);
-				if(res != SZ_OK)
-					break;
-			}
-			DATABLOCK tmp = {outBuffer, outBufferSize};
-			aret.push_back(COPY(&tmp));
 		}
-		ISzAlloc_Free(&allocImp, outBuffer);
-	}
 
-	SzFree(NULL, temp);
-	SzArEx_Free(&db, &allocImp);
-	ISzAlloc_Free(&allocImp, lookStream.buf);
+	next_file:
+		err = mz_zip_reader_goto_next_entry(reader);
 
-	if(res == SZ_OK) {
-		//Everything is Ok
+		if(err != MZ_OK && err != MZ_END_OF_LIST) {
+			break;
+		}
+	} while(err == MZ_OK);
+
+	mz_zip_reader_delete(&reader);
+
+	if(err == MZ_END_OF_LIST)
 		return aret;
-	}
 
+	for(auto &db: aret)
+		DESTORY(&db);
 	return {};
 }
 HICON CreateIconFromMemory(PBYTE iconData, size_t iconDataSize,UINT cx) {
