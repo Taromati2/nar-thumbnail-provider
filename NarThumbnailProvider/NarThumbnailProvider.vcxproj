@@ -37,7 +37,6 @@
     <ClCompile Include="..\minizip-ng\mz_strm_os_win32.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_pkcrypt.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_split.c" />
-    <ClCompile Include="..\minizip-ng\mz_strm_wzaes.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_zlib.c" />
     <ClCompile Include="..\minizip-ng\mz_strm_zstd.c" />
     <ClCompile Include="..\minizip-ng\mz_zip.c" />

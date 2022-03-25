@@ -17,9 +17,6 @@
     <ClCompile Include="..\minizip-ng\mz_strm_zlib.c">
       <Filter>minizip</Filter>
     </ClCompile>
-    <ClCompile Include="..\minizip-ng\mz_strm_wzaes.c">
-      <Filter>minizip</Filter>
-    </ClCompile>
     <ClCompile Include="..\minizip-ng\mz_strm_split.c">
       <Filter>minizip</Filter>
     </ClCompile>
