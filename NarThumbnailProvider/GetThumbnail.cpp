@@ -186,6 +186,7 @@ HBITMAP GetNARThumbnail(UINT cx,IStream* stream) {
 		auto &db	= dbs[index];
 		hIcon		= CreateIconFromMemory(db.data, db.size, cx);
 		if(!hIcon) {
+			DESTORY(&db);
 			dbs.erase(dbs.begin() + index);
 			size--;
 		}
