@@ -1,10 +1,5 @@
 
-#include "GetThumbnail.h"
-
-#include <string_view>
-#include <vector>
-#include <ctime>
-#include <cstdlib>
+#include "windows.h"
 
 #include "../minizip-ng/mz.h"
 #include "../minizip-ng/mz_strm.h"
