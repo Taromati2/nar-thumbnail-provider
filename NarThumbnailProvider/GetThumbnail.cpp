@@ -15,7 +15,7 @@
 
 struct DATABLOCK {
 	PBYTE data;
-	DWORD size;
+	int32_t size;
 };
 void DESTORY(DATABLOCK *dbp) {
 	free(dbp->data);
@@ -76,7 +76,10 @@ std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
 			::std::u8string_view name((char8_t *)file_info->filename, file_info->filename_size);
 			if(!name.starts_with(u8".nar_icon/"))
 				goto next_file;
-			DATABLOCK tmp = {(PBYTE)malloc(file_info->uncompressed_size), file_info->uncompressed_size};
+			if(file_info->uncompressed_size>=INT32_MAX)
+				goto next_file;
+			int32_t	  data_size = (int32_t)file_info->uncompressed_size;
+			DATABLOCK tmp		= {(PBYTE)malloc(data_size), data_size};
 			if(tmp.data) {
 				mz_zip_reader_entry_save_buffer(reader, tmp.data, tmp.size);
 				aret.push_back(tmp);
@@ -100,13 +103,13 @@ std::vector<DATABLOCK> GetIconResourcesFromNarFStream(IStream *is) {
 		DESTORY(&db);
 	return {};
 }
-HICON CreateIconFromMemory(PBYTE iconData, size_t iconDataSize,UINT cx) {
+HICON CreateIconFromMemory(PBYTE iconData, int32_t iconDataSize, UINT cx) {
 	auto offset = LookupIconIdFromDirectoryEx(iconData, TRUE, cx, cx, 0);
 	return CreateIconFromResourceEx(iconData + offset, iconDataSize - offset, TRUE, 0x30000, cx, cx, 0);
 }
 HBITMAP GetNARThumbnail(UINT cx,IStream* stream) {
 	std::vector<DATABLOCK> dbs	  = GetIconResourcesFromNarFStream(stream);
-	std::srand(std::time(NULL));
+	std::srand((unsigned)std::time(NULL));
 	auto size = dbs.size();
 	HICON hIcon = NULL;
 	while(size && !hIcon) {
