@@ -15,13 +15,13 @@
 			<?if $(var.Platform)=x86 ?>
 				<Directory Id="SystemFolder" Name="SystemFolderName">
 					<Component Id="MainDllComponent" Guid="*">
-						<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\Release\NarThumbnailProvider.dll" />
+						<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\Release\Win32\NarThumbnailProvider.dll" />
 					</Component>
 				</Directory>
 			<?else ?>
 				<Directory Id="System64Folder" Name="SystemFolderName">
 					<Component Id="MainDllComponent" Guid="*">
-						<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\x64\Release\NarThumbnailProvider.dll" />
+						<File Id="MainDllFile" Name="NarThumbnailProvider.dll" Source="..\Release\x64\NarThumbnailProvider.dll" />
 					</Component>
 				</Directory>
 			<?endif ?>
